@@ -16,6 +16,9 @@
  */
 package nl.knaw.dans.common.dbflib;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -647,8 +650,13 @@ public class Table
         }
 
         jumpToRecordAt(index);
-
-        final byte firstByteOfRecord = raFile.readByte();
+        
+        // Read one record worth of raw data and construct a 
+        byte[] buffer = new byte[header.getRecordLength()];
+        raFile.read(buffer);
+        DataInput dataInput = new DataInputStream(new ByteArrayInputStream(buffer));
+        
+        final byte firstByteOfRecord = dataInput.readByte();
 
         /*
          * This should actually not be possible, as we already checked the index against the record
@@ -663,7 +671,7 @@ public class Table
 
         for (final Field field : header.getFields())
         {
-            final byte[] rawData = Util.readStringBytes(raFile,
+            final byte[] rawData = Util.readStringBytes(dataInput,
                                                         field.getLength());
 
             switch (field.getType())
